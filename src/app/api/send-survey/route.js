@@ -1,31 +1,82 @@
 import { Resend } from "resend";
 import { NextResponse } from "next/server";
 
-function formatCustomerEmail(data) {
+const BRAND_COLOR = "#006361";
+
+function escapeHtml(text) {
+  if (!text) return "";
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/\n/g, "<br>");
+}
+
+function emailWrapper(title, bodyContent) {
+  const dateStr = new Date().toLocaleString("mn-MN");
   return `
-<h2>Харилцагчийн Сэтгэл Ханамж & Санал Хүсэлтийн Хуудас</h2>
-<table cellpadding="8" cellspacing="0" border="1" style="border-collapse: collapse; width: 100%;">
-  <tr><td><strong>1. Нийт сэтгэл ханамж</strong></td><td>${data.satisfaction || "-"}</td></tr>
-  <tr><td><strong>2. Зээлийн үйлчилгээ</strong></td><td>${data.loanService || "-"}</td></tr>
-  <tr><td><strong>3. Харилцаа, үйлчилгээний чанар</strong></td><td>${data.communication || "-"}</td></tr>
-  <tr><td><strong>4. Санал, гомдол</strong></td><td>${data.feedback || "-"}</td></tr>
-</table>
-<p><em>Илгээсэн огноо: ${new Date().toLocaleString("mn-MN")}</em></p>
-  `.trim();
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(title)}</title>
+</head>
+<body style="margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; line-height: 1.5; color: #333; background-color: #f5f5f5;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 24px;">
+    <div style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+      <div style="background: ${BRAND_COLOR}; color: #fff; padding: 20px 24px;">
+        <h1 style="margin: 0; font-size: 20px; font-weight: 700;">${escapeHtml(title)}</h1>
+      </div>
+      <div style="padding: 24px;">
+        ${bodyContent}
+        <p style="margin: 24px 0 0; padding-top: 16px; border-top: 1px solid #eee; font-size: 13px; color: #666;">
+          Илгээсэн огноо: ${dateStr}
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`.trim();
+}
+
+function row(label, value) {
+  const v = value ? escapeHtml(String(value)) : "—";
+  return `
+  <tr>
+    <td style="padding: 12px 16px; border-bottom: 1px solid #eee; font-weight: 600; color: #444; width: 45%;">${escapeHtml(label)}</td>
+    <td style="padding: 12px 16px; border-bottom: 1px solid #eee; color: #333;">${v}</td>
+  </tr>`;
+}
+
+function formatCustomerEmail(data) {
+  const tableRows = [
+    row("1. Нийт сэтгэл ханамж", data.satisfaction),
+    row("2. Зээлийн үйлчилгээ", data.loanService),
+    row("3. Харилцаа, үйлчилгээний чанар", data.communication),
+    row("4. Санал, гомдол", data.feedback),
+  ].join("");
+  const body = `
+    <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse;">
+      ${tableRows}
+    </table>`;
+  return emailWrapper("Харилцагчийн Сэтгэл Ханамж & Санал Хүсэлтийн Хуудас", body);
 }
 
 function formatEmployeeEmail(data) {
-  return `
-<h2>Ажилтны Сэтгэл Ханамж & Санал Хүсэлт Хуудас</h2>
-<table cellpadding="8" cellspacing="0" border="1" style="border-collapse: collapse; width: 100%;">
-  <tr><td><strong>1. Ажлын орчин, нөхцөл</strong></td><td>${data.workEnvironment || "-"}</td></tr>
-  <tr><td><strong>2. Харилцагчтай харьцах процесс</strong></td><td>${data.customerInteraction || "-"}</td></tr>
-  <tr><td><strong>3. Дэмжлэг, удирдлага</strong></td><td>${data.supportManagement || "-"}</td></tr>
-  <tr><td><strong>4. Удирдлагын таарамжгүй байдал</strong></td><td>${data.managementIssues || "-"}</td></tr>
-  <tr><td><strong>5. Санал хүсэлт</strong></td><td>${data.suggestions || "-"}</td></tr>
-</table>
-<p><em>Илгээсэн огноо: ${new Date().toLocaleString("mn-MN")}</em></p>
-  `.trim();
+  const tableRows = [
+    row("1. Ажлын орчин, нөхцөл", data.workEnvironment),
+    row("2. Харилцагчтай харьцах процесс", data.customerInteraction),
+    row("3. Дэмжлэг, удирдлага", data.supportManagement),
+    row("4. Удирдлагын таарамжгүй байдал", data.managementIssues),
+    row("5. Санал хүсэлт", data.suggestions),
+  ].join("");
+  const body = `
+    <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse;">
+      ${tableRows}
+    </table>`;
+  return emailWrapper("Ажилтны Сэтгэл Ханамж & Санал Хүсэлт Хуудас", body);
 }
 
 export async function POST(request) {
