@@ -91,11 +91,8 @@ export async function POST(request) {
 
     const resend = new Resend(apiKey);
     const { type, data } = await request.json();
-    // Resend sandbox (onboarding@resend.dev) only allows sending to your Resend account email.
-    // Default to that so it works without domain verification. After you verify a domain at
-    // resend.com/domains and change the "from" address, set SURVEY_RECIPIENT_EMAIL in Vercel
-    // (e.g. to hr@bumandusal.mn) to receive surveys elsewhere.
-    const toEmail = process.env.SURVEY_RECIPIENT_EMAIL || "bumandusal.bbsb@gmail.com";
+    // Domain bumandusal.mn is verified in Resend — can send to any address.
+    const toEmail = process.env.SURVEY_RECIPIENT_EMAIL || "hr@bumandusal.mn";
 
     if (!type || !data) {
       return NextResponse.json({ error: "Missing type or data" }, { status: 400 });
@@ -110,7 +107,7 @@ export async function POST(request) {
       type === "customer" ? formatCustomerEmail(data) : formatEmployeeEmail(data);
 
     const { error } = await resend.emails.send({
-      from: "Bumandusal Survey <onboarding@resend.dev>",
+      from: "Bumandusal Survey <survey@bumandusal.mn>",
       to: toEmail,
       subject,
       html,
