@@ -2,6 +2,55 @@
 
 import { useState } from "react";
 
+const inputBase =
+  "w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-gray-800 placeholder-gray-400 transition focus:border-[#006361] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#006361]/20";
+
+function RadioGroup({ name, options, value, onChange }) {
+  return (
+    <div className="flex flex-wrap gap-3">
+      {options.map((opt) => (
+        <label
+          key={opt}
+          className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 px-4 py-3 transition ${
+            value === opt
+              ? "border-[#006361] bg-[#006361]/5"
+              : "border-gray-200 bg-white hover:border-gray-300"
+          }`}
+        >
+          <input
+            type="radio"
+            name={name}
+            value={opt}
+            checked={value === opt}
+            onChange={() => onChange(opt)}
+            className="h-4 w-4 border-gray-300 focus:ring-[#006361]"
+            style={{ accentColor: "#006361" }}
+          />
+          <span className="font-medium text-gray-800">{opt}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
+function FormSection({ num, title, question, children }) {
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50/30 p-5">
+      <div className="mb-3 flex items-baseline gap-2">
+        <span
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
+          style={{ backgroundColor: "#006361" }}
+        >
+          {num}
+        </span>
+        <h3 className="font-semibold text-gray-900">{title}</h3>
+      </div>
+      <p className="mb-4 text-gray-600">{question}</p>
+      {children}
+    </div>
+  );
+}
+
 export default function CustomerForm({ onSubmit }) {
   const [formData, setFormData] = useState({
     satisfaction: "",
@@ -9,10 +58,19 @@ export default function CustomerForm({ onSubmit }) {
     communication: "",
     feedback: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit?.(formData);
+    if (!onSubmit || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formData);
+    } catch (err) {
+      alert(err.message || "Илгээхэд алдаа гарлаа. Дахин оролдоно уу.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (field, value) => {
@@ -21,88 +79,67 @@ export default function CustomerForm({ onSubmit }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Section 1: Overall Satisfaction */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-800">1. Нийт сэтгэл ханамж</h3>
-        <p className="text-gray-600">Та манай үйлчилгээтэй хэрхэн сэтгэл хангалуун байна вэ?</p>
-        <div className="flex flex-wrap gap-4">
-          {["Маш сэтгэл хангалуун", "Дунд зэрэг", "Сэтгэл хангалуун бус"].map((opt) => (
-            <label key={opt} className="flex cursor-pointer items-center gap-2">
-              <input
-                type="radio"
-                name="satisfaction"
-                value={opt}
-                checked={formData.satisfaction === opt}
-                onChange={() => handleChange("satisfaction", opt)}
-                className="h-4 w-4 border-gray-300 text-green-600 focus:ring-green-500"
-              />
-              <span className="text-gray-700">{opt}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      <FormSection
+        num={1}
+        title="Нийт сэтгэл ханамж"
+        question="Та манай үйлчилгээтэй хэрхэн сэтгэл хангалуун байна вэ?"
+      >
+        <RadioGroup
+          name="satisfaction"
+          options={["Маш сэтгэл хангалуун", "Дунд зэрэг", "Сэтгэл хангалуун бус"]}
+          value={formData.satisfaction}
+          onChange={(v) => handleChange("satisfaction", v)}
+        />
+      </FormSection>
 
-      {/* Section 2: Loan Service */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-800">2. Зээлийн үйлчилгээ</h3>
-        <p className="text-gray-600">Манай зээлийн үйлчилгээ таны хэрэгцээг хангаж байна уу?</p>
-        <div className="flex flex-wrap gap-4">
-          {["Тийм", "Үгүй"].map((opt) => (
-            <label key={opt} className="flex cursor-pointer items-center gap-2">
-              <input
-                type="radio"
-                name="loanService"
-                value={opt}
-                checked={formData.loanService === opt}
-                onChange={() => handleChange("loanService", opt)}
-                className="h-4 w-4 border-gray-300 text-green-600 focus:ring-green-500"
-              />
-              <span className="text-gray-700">{opt}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      <FormSection
+        num={2}
+        title="Зээлийн үйлчилгээ"
+        question="Манай зээлийн үйлчилгээ таны хэрэгцээг хангаж байна уу?"
+      >
+        <RadioGroup
+          name="loanService"
+          options={["Тийм", "Үгүй"]}
+          value={formData.loanService}
+          onChange={(v) => handleChange("loanService", v)}
+        />
+      </FormSection>
 
-      {/* Section 3: Communication, Service Quality */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-800">3. Харилцаа, үйлчилгээний чанар</h3>
-        <p className="text-gray-600">Манай ажилтнууд таны асуулт, шаардлагад хэр хурдан, ойлгомжтой хариулсан бэ?</p>
-        <div className="flex flex-wrap gap-4">
-          {["Маш сайн", "Дунд зэрэг", "Сайн бус"].map((opt) => (
-            <label key={opt} className="flex cursor-pointer items-center gap-2">
-              <input
-                type="radio"
-                name="communication"
-                value={opt}
-                checked={formData.communication === opt}
-                onChange={() => handleChange("communication", opt)}
-                className="h-4 w-4 border-gray-300 text-green-600 focus:ring-green-500"
-              />
-              <span className="text-gray-700">{opt}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      <FormSection
+        num={3}
+        title="Харилцаа, үйлчилгээний чанар"
+        question="Манай ажилтнууд таны асуулт, шаардлагад хэр хурдан, ойлгомжтой хариулсан бэ?"
+      >
+        <RadioGroup
+          name="communication"
+          options={["Маш сайн", "Дунд зэрэг", "Сайн бус"]}
+          value={formData.communication}
+          onChange={(v) => handleChange("communication", v)}
+        />
+      </FormSection>
 
-      {/* Section 4: Suggestions, Complaints */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-800">4. Санал, гомдол</h3>
-        <p className="text-gray-600">Танд санал хүсэлт байна уу?</p>
+      <FormSection
+        num={4}
+        title="Санал, гомдол"
+        question="Танд санал хүсэлт байна уу?"
+      >
         <textarea
           value={formData.feedback}
           onChange={(e) => handleChange("feedback", e.target.value)}
           placeholder="(Богино текст бичих зай)"
           rows={4}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-700 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+          className={`${inputBase} resize-none`}
         />
-      </div>
+      </FormSection>
 
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex justify-end gap-3 border-t border-gray-100 pt-6">
         <button
           type="submit"
-          className="rounded-lg bg-green-600 px-6 py-2.5 font-medium text-white transition hover:bg-green-700"
+          disabled={isSubmitting}
+          className="rounded-xl px-8 py-3.5 font-semibold text-white shadow-md transition hover:shadow-lg hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
+          style={{ backgroundColor: "#006361" }}
         >
-          Илгээх
+          {isSubmitting ? "Илгээж байна..." : "Илгээх"}
         </button>
       </div>
     </form>

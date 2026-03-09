@@ -2,6 +2,57 @@
 
 import { useState } from "react";
 
+const inputBase =
+  "w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-gray-800 placeholder-gray-400 transition focus:border-[#006361] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#006361]/20";
+
+const radioOptions = ["Маш сайн", "Дунд зэрэг", "Сайн бус"];
+
+function RadioGroup({ name, options, value, onChange }) {
+  return (
+    <div className="flex flex-wrap gap-3">
+      {options.map((opt) => (
+        <label
+          key={opt}
+          className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 px-4 py-3 transition ${
+            value === opt
+              ? "border-[#006361] bg-[#006361]/5"
+              : "border-gray-200 bg-white hover:border-gray-300"
+          }`}
+        >
+          <input
+            type="radio"
+            name={name}
+            value={opt}
+            checked={value === opt}
+            onChange={() => onChange(opt)}
+            className="h-4 w-4 border-gray-300 focus:ring-[#006361]"
+            style={{ accentColor: "#006361" }}
+          />
+          <span className="font-medium text-gray-800">{opt}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
+function FormSection({ num, title, question, children }) {
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50/30 p-5">
+      <div className="mb-3 flex items-baseline gap-2">
+        <span
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
+          style={{ backgroundColor: "#006361" }}
+        >
+          {num}
+        </span>
+        <h3 className="font-semibold text-gray-900">{title}</h3>
+      </div>
+      {question && <p className="mb-4 text-gray-600">{question}</p>}
+      {children}
+    </div>
+  );
+}
+
 export default function EmployeeForm({ onSubmit }) {
   const [formData, setFormData] = useState({
     workEnvironment: "",
@@ -10,113 +61,102 @@ export default function EmployeeForm({ onSubmit }) {
     managementIssues: "",
     suggestions: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit?.(formData);
+    if (!onSubmit || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formData);
+    } catch (err) {
+      alert(err.message || "Илгээхэд алдаа гарлаа. Дахин оролдоно уу.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const radioOptions = ["Маш сайн", "Дунд зэрэг", "Сайн бус"];
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Section 1: Work Environment */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-800">1. Ажлын орчин, нөхцөл</h3>
-        <p className="text-gray-600">Таны ажлын орчин, нөхцөл ямар байна вэ?</p>
-        <div className="flex flex-wrap gap-4">
-          {radioOptions.map((opt) => (
-            <label key={opt} className="flex cursor-pointer items-center gap-2">
-              <input
-                type="radio"
-                name="workEnvironment"
-                value={opt}
-                checked={formData.workEnvironment === opt}
-                onChange={() => handleChange("workEnvironment", opt)}
-                className="h-4 w-4 border-gray-300 text-green-600 focus:ring-green-500"
-              />
-              <span className="text-gray-700">{opt}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      <FormSection
+        num={1}
+        title="Ажлын орчин, нөхцөл"
+        question="Таны ажлын орчин, нөхцөл ямар байна вэ?"
+      >
+        <RadioGroup
+          name="workEnvironment"
+          options={radioOptions}
+          value={formData.workEnvironment}
+          onChange={(v) => handleChange("workEnvironment", v)}
+        />
+      </FormSection>
 
-      {/* Section 2: Customer Interaction */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-800">2. Харилцагчтай харьцах процесс</h3>
-        <p className="text-gray-600">Таны ажиллах орчин, харилцагчид үйлчилгээ үзүүлэх боломж хэр хангалттай байна вэ?</p>
-        <div className="flex flex-wrap gap-4">
-          {radioOptions.map((opt) => (
-            <label key={opt} className="flex cursor-pointer items-center gap-2">
-              <input
-                type="radio"
-                name="customerInteraction"
-                value={opt}
-                checked={formData.customerInteraction === opt}
-                onChange={() => handleChange("customerInteraction", opt)}
-                className="h-4 w-4 border-gray-300 text-green-600 focus:ring-green-500"
-              />
-              <span className="text-gray-700">{opt}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      <FormSection
+        num={2}
+        title="Харилцагчтай харьцах процесс"
+        question="Таны ажиллах орчин, харилцагчид үйлчилгээ үзүүлэх боломж хэр хангалттай байна вэ?"
+      >
+        <RadioGroup
+          name="customerInteraction"
+          options={radioOptions}
+          value={formData.customerInteraction}
+          onChange={(v) => handleChange("customerInteraction", v)}
+        />
+      </FormSection>
 
-      {/* Section 3: Support, Management */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-800">3. Дэмжлэг, удирдлага</h3>
-        <p className="text-gray-600">Байгууллагаас авах дэмжлэг, удирдлага таны ажлын гүйцэтгэлд хэр нөлөөлж байна вэ?</p>
-        <div className="flex flex-wrap gap-4">
-          {radioOptions.map((opt) => (
-            <label key={opt} className="flex cursor-pointer items-center gap-2">
-              <input
-                type="radio"
-                name="supportManagement"
-                value={opt}
-                checked={formData.supportManagement === opt}
-                onChange={() => handleChange("supportManagement", opt)}
-                className="h-4 w-4 border-gray-300 text-green-600 focus:ring-green-500"
-              />
-              <span className="text-gray-700">{opt}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      <FormSection
+        num={3}
+        title="Дэмжлэг, удирдлага"
+        question="Байгууллагаас авах дэмжлэг, удирдлага таны ажлын гүйцэтгэлд хэр нөлөөлж байна вэ?"
+      >
+        <RadioGroup
+          name="supportManagement"
+          options={radioOptions}
+          value={formData.supportManagement}
+          onChange={(v) => handleChange("supportManagement", v)}
+        />
+      </FormSection>
 
-      {/* Section 4: Management Issues */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-800">4. Удирдлагын таарамжгүй байдал бий эсэх?</h3>
+      <FormSection
+        num={4}
+        title="Удирдлагын таарамжгүй байдал бий эсэх?"
+        question={null}
+      >
         <input
           type="text"
           value={formData.managementIssues}
           onChange={(e) => handleChange("managementIssues", e.target.value)}
           placeholder="(Богино текст бичих зай)"
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-700 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+          className={inputBase}
         />
-      </div>
+      </FormSection>
 
-      {/* Section 5: Suggestions */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-800">5. Танд санал хүсэлт байна уу?</h3>
+      <FormSection
+        num={5}
+        title="Танд санал хүсэлт байна уу?"
+        question={null}
+      >
         <input
           type="text"
           value={formData.suggestions}
           onChange={(e) => handleChange("suggestions", e.target.value)}
           placeholder="(Богино текст бичих зай)"
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-700 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+          className={inputBase}
         />
-      </div>
+      </FormSection>
 
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex justify-end gap-3 border-t border-gray-100 pt-6">
         <button
           type="submit"
-          className="rounded-lg bg-green-600 px-6 py-2.5 font-medium text-white transition hover:bg-green-700"
+          disabled={isSubmitting}
+          className="rounded-xl px-8 py-3.5 font-semibold text-white shadow-md transition hover:shadow-lg hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
+          style={{ backgroundColor: "#006361" }}
         >
-          Илгээх
+          {isSubmitting ? "Илгээж байна..." : "Илгээх"}
         </button>
       </div>
     </form>
